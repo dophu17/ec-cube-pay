@@ -1,0 +1,186 @@
+{% extends 'default_frame.twig' %}
+
+{% set body_class = 'mypage' %}
+
+{% block javascript %}
+
+{# 将来の支払いを設定する　https://docs.stripe.com/payments/save-and-reuse?platform=web&ui=elements #}
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+    $(function () {
+        // Stripe初期化
+        const stripe = Stripe('{{ stripe_public_key }}');
+
+        // 汎用エラーハンドリング
+        const handleError = (error) => {
+            const errorMessage = error?.message || '予期しないエラーが発生しました。';
+            $('#card-errors').text(errorMessage);
+            loadingOverlay("hide");
+        };
+
+        // クライアントシークレット取得
+        const getClientSecret = async () => {
+            try {
+                const response = await fetch('{{ path("stripe_get_client_secret") }}', {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' },
+                });
+                if (!response.ok) throw new Error('Failed to retrieve client secret.');
+                return (await response.json()).client_secret;
+            } catch (error) {
+                handleError(error);
+                throw error;
+            }
+        };
+
+        // 画面表示
+        const initializeStripeElements = async () => {
+            try {
+                const clientSecret = await getClientSecret();
+                const elements = stripe.elements({ clientSecret });
+                const paymentElement = elements.create('payment');
+                paymentElement.mount('#payment-element');
+                return { elements };
+            } catch (error) {
+                handleError(error);
+                throw error;
+            }
+        };
+
+        let stripeElements;
+        initializeStripeElements().then(({ elements }) => {
+            stripeElements = elements;
+        });
+
+        // カード登録フォーム送信
+        $('#payment-form').on('submit', async function (event) {
+            event.preventDefault();
+            $('.bg-load-overlay').css('z-index', 100);
+            try {
+                const { error, setupIntent } = await stripe.confirmSetup({
+                    elements: stripeElements,
+                    confirmParams: {
+                        payment_method_data: {
+                            allow_redisplay: 'always'
+                        }
+                    },
+                    redirect: "if_required"
+                });
+
+                if (error) {
+                    handleError(error);
+                } else if (setupIntent?.status === 'succeeded') {
+                    alert('カード情報が正常に登録されました。');
+                    location.reload();
+                }
+            } catch (error) {
+                handleError({ message: 'エラーが発生しました。もう一度お試しください。' });
+            } finally {
+                loadingOverlay("hide");
+                // zindexを最大値へ
+                $('.bg-load-overlay').css('z-index', 2147483647);
+            }
+        });
+
+        // カード削除処理
+        $(document).on('click', '.delete-card-btn', async function (event) {
+            event.preventDefault();
+            if (!confirm('削除してよろしいでしょうか？')) return;
+
+            const button = $(this);
+            const paymentMethodId = button.data('payment-method-id');
+            const deleteUrl = '{{ path("stripe_payment_mypage_card_delete", { "paymentMethodId": "__id__" }) }}'.replace('__id__', paymentMethodId);
+
+            try {
+                const response = await fetch(deleteUrl, { method: 'POST' });
+                if (!response.ok) throw new Error('カード削除に失敗しました。');
+
+                alert('カードが正常に削除されました。');
+
+                // 該当カードの要素を削除
+                const cardInfoElement = button.closest('.card-info');
+                cardInfoElement.fadeOut(() => {
+                    cardInfoElement.remove();
+
+                    // 残りのカード数を確認
+                    if ($('.card-info').length === 0) {
+                        // 「登録されたカードはありません。」メッセージを表示
+                        const noCardMessage = '<div class="card-info d-flex justify-content-between align-items-center ec-mb10"><div>登録されたカードはありません。</div></div>';
+                        $('#card-list').html(noCardMessage);
+                    }
+                });
+            } catch (error) {
+                handleError({ message: error.message || 'カードの削除中にエラーが発生しました。' });
+            } finally {
+                loadingOverlay("hide");
+            }
+        });
+
+    });
+</script>
+{% endblock %}
+
+{% block main %}
+<div class="ec-mypageRole">
+    <div class="ec-pageHeader">
+        <h1>{{ 'front.mypage.title'|trans }}/カード情報変更</h1>
+    </div>
+    {% include 'Mypage/navi.twig' %}
+</div>
+
+<div class="ec-off1Grid">
+    <div class="ec-off1Grid__cell">
+        <div class="ec-borderedDefs">
+            <dl>
+                <dt class="ec-title">現在登録されているカード情報</dt>
+                <dd id="card-list">
+                    {% if existingCards|length > 0 %}
+                        {% for card in existingCards %}
+                            <div class="card-info d-flex justify-content-between align-items-center ec-mb10">
+                                <div>
+                                    <span>カード番号: **** **** **** {{ card.card.last4 }}</span>
+                                </div>
+                                <div>
+                                    <span>有効期限: {{ card.card.exp_month }}/{{ card.card.exp_year }}</span>
+                                </div>
+                                <div>
+                                    <a href="javascript:void(0);" 
+                                    class="delete-card-btn" 
+                                    data-payment-method-id="{{ card.id }}">
+                                        <i class="fa fa-times text-secondary"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="card-info d-flex justify-content-between align-items-center ec-mb10">
+                            <div id="payment-no-card">登録されたカードはありません。</div>
+                        </div>
+                    {% endif %}
+                </dd>
+            </dl>
+        </div>
+
+        <!-- カード情報登録 -->
+        <form id="payment-form" action="{{ path('stripe_payment_mypage_card_info') }}">
+            {{ form_widget(form._token) }}
+            <div class="ec-borderedDefs">
+                <dl>
+                    <dt>カード情報登録</dt>
+                    <dd>
+                        <div id="payment-element" class="ec-halfInput"></div>
+                        <div id="card-errors" role="alert" class="text-danger"></div>
+                    </dd>
+                </dl>
+            </div>
+            <div class="ec-off4Grid">
+                <div class="ec-off4Grid__cell">
+                    <button type="submit" class="ec-blockBtn--cancel">
+                        {{ 'common.registration'|trans }}
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

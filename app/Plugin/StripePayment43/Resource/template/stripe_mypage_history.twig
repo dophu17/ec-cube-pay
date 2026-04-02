@@ -1,0 +1,25 @@
+{% if Order.stripe_payment_id is not null and Order.stripe_payment_id != '' %}
+{% block javascript %}
+<script>
+    $(function () {
+        const stripePaymentTd = $(".ec-orderPayment").last().find("p").last();
+        const paymentMethodTd = $('#payment_method');
+
+        if (stripePaymentTd.length > 0 && paymentMethodTd.length > 0) {
+            stripePaymentTd.html(`${stripePaymentTd.text().trim()} ${paymentMethodTd.text().trim()}`);
+        }
+        // 追加後に #payment_method を削除
+        $("#payment_method").remove();
+    });
+</script>
+{% endblock %}
+{% endif %}
+
+<div id="payment_method">
+    ({{ Order.stripe_payment_method_name }}
+    {% if Order.stripe_payment_card_no_last4 is not empty %}
+        {{ Order.stripe_payment_card_no_last4 }})
+    {% else %}
+        )
+    {% endif %}
+</div>

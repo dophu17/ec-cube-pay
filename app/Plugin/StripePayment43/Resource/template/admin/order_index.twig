@@ -1,0 +1,143 @@
+<script>
+    $(function () {
+        // ヘッダーを追加する関数
+        function addHeader(targetText, newHeaderHtml) {
+            const targetHeader = $(`th:contains("${targetText}")`);
+            const newHeader = $('<th>', {
+                id: 'col_payment_status',
+                class: 'border-top-0 pt-2 pb-2 text-center',
+                html: newHeaderHtml
+            });
+
+            if (targetHeader.length > 0) {
+                targetHeader.after(newHeader);
+            } else {
+                console.error(`対象のヘッダー "${targetText}" が見つかりませんでした`);
+            }
+        }
+
+        // 各行に対する処理を行う関数
+        function addStatusCol() {
+            $('tbody tr').each(function () {
+                const checkbox = $(this).find('input[type="checkbox"][data-id]');
+                const dataId = checkbox.data('id');
+
+                if (dataId) {
+                    const paymentStatusTd = $(`td[id="stripe_payment_payment_status--${dataId}"]`);
+
+                    if (paymentStatusTd.length > 0) {
+                        $(this).find('td:nth-child(4)').after(paymentStatusTd);
+                    }
+
+                    // [Stripe決済]という文字列を保持するtd要素がある場合、id="stripe_payment_method_name--{dataId}"のtd要素内の文字列を[Stripe決済]という文字列の後に追加する
+                    const stripePaymentTd = $(this).find('td:contains("Stripe決済")').first();
+                    const paymentMethodTd = $(`td[id="stripe_payment_method_name--${dataId}"]`);
+
+                    if (stripePaymentTd.length > 0 && paymentMethodTd.length > 0) {
+                        stripePaymentTd.html(`${stripePaymentTd.text().trim()}<br />${paymentMethodTd.text().trim()}`);
+                    }
+                }
+            });
+        }
+
+        function addStatusChangeBlock() 
+        {
+            const block = $('#status_updage_block');
+            $('#form_bulk div.col.d-none.btn-bulk-wrapper').last().after(block);
+        }
+        
+        // 決済方法一括変更処理実行
+        $('#btn_bulk_payment_status').on('click', function(event) {
+            event.preventDefault();
+            const selectedValue = $('#option_bulk_payment_status').val(); // 選択された値を取得
+            // 値が空の場合は処理をスキップ
+            if (selectedValue === "") {
+                alert("決済状況を選択してください");
+                return;
+            }
+
+            $('#form_bulk').attr('action', "{{ url('stripe_payment_admin_order_bulk_update_payment_status') }}").submit();
+            return false;
+        });
+
+        //  検索条件追加
+        $('.searchDetail__append').appendTo($('#searchDetail'));
+
+        // 実行処理
+        addHeader('{{ "stripe_payment.admin.payment_status.col_order_staus"|trans }}', '{{ "stripe_payment.admin.payment_status.col_payment_status"|trans }}');
+        addStatusCol();
+        addStatusChangeBlock();
+    });
+
+</script>
+
+<div class="d-none" id="stripe-payment-status-table">
+    <table>
+        <tr>
+            {% for Order in pagination %}
+                {% for Shipping in Order.Shippings %}
+                    <td class="align-middle text-center fw-bold
+                        {% if Order.stripe_payment_payment_status is not null %}
+                            {% if Order.stripe_payment_payment_status.id == constant('Plugin\\StripePayment43\\Entity\\PaymentStatus::OUTSTANDING') %}
+                                text-primary
+                            {% elseif Order.stripe_payment_payment_status.id == constant('Plugin\\StripePayment43\\Entity\\PaymentStatus::PROVISIONAL_SALES') %}
+                                text-info
+                            {% elseif Order.stripe_payment_payment_status.id == constant('Plugin\\StripePayment43\\Entity\\PaymentStatus::ACTUAL_SALES') %}
+                                text-success
+                            {% elseif Order.stripe_payment_payment_status.id == constant('Plugin\\StripePayment43\\Entity\\PaymentStatus::CANCEL') %}
+                                text-secondary
+                            {% elseif Order.stripe_payment_payment_status.id == constant('Plugin\\StripePayment43\\Entity\\PaymentStatus::FAILURE') %}
+                                text-danger
+                            {% elseif Order.stripe_payment_payment_status.id == constant('Plugin\\StripePayment43\\Entity\\PaymentStatus::PARTIAL_REFUND') %}
+                                text-warning
+                            {% elseif Order.stripe_payment_payment_status.id == constant('Plugin\\StripePayment43\\Entity\\PaymentStatus::FULL_REFUND') %}
+                                text-warning
+                            {% elseif Order.stripe_payment_payment_status.id == constant('Plugin\\StripePayment43\\Entity\\PaymentStatus::CHARGEBACK') %}
+                                text-danger
+                            {% endif %}
+                        {% else %}
+                            text-muted
+                        {% endif %}" 
+                        id="stripe_payment_payment_status--{{ Shipping.id }}">
+                        {{ Order.stripe_payment_payment_status.name ?? '―' }}
+                    </td>
+                    <td id="stripe_payment_method_name--{{ Shipping.id }}">
+                        ({{ Order.stripe_payment_method_name }})
+                    </td>
+                {% endfor %}
+            {% endfor %}
+        </tr>
+    </table>
+</div>
+
+<div class="col d-none btn-bulk-wrapper"  id="status_updage_block">
+    <div class="d-inline-block me-2">
+        <select class="form-select" id="option_bulk_payment_status" name="option_bulk_payment_status">
+            <option value="" selected>{{ 'stripe_payment.admin.payment_status.updage_payment_status'|trans }}</option>
+            <option value="{{constant('Plugin\\StripePayment43\\Entity\\PaymentStatus::OUTSTANDING')}}">未決済</option>
+            <option value="{{constant('Plugin\\StripePayment43\\Entity\\PaymentStatus::PROVISIONAL_SALES')}}">仮売上</option>
+            <option value="{{constant('Plugin\\StripePayment43\\Entity\\PaymentStatus::ACTUAL_SALES')}}">実売上</option>
+            <option value="{{constant('Plugin\\StripePayment43\\Entity\\PaymentStatus::CANCEL')}}">キャンセル</option>
+            <option value="{{constant('Plugin\\StripePayment43\\Entity\\PaymentStatus::FAILURE')}}">決済失敗</option>
+        </select>
+    </div>
+    <button type="button" id="btn_bulk_payment_status" class="btn btn-ec-regular mr-2">
+        {{ 'stripe_payment.admin.payment_status.bulk_submit'|trans }}
+    </button>
+</div>
+
+<div class="row searchDetail__append">
+    <div class="col">
+        <label class="col-form-label">{{'stripe_payment.admin.payment_status.search_condition_payment_status'|trans}}</label>
+        <div class="form-row align-items-center">
+            <div class="col">
+                {{ form_widget(searchForm.PaymentStatuses, {'label_attr': {'class': 'checkbox-inline'}}) }}
+                {{ form_errors(searchForm.PaymentStatuses) }}
+            </div>
+        </div>
+    </div>
+
+    <div class="col">
+
+    </div>
+</div>

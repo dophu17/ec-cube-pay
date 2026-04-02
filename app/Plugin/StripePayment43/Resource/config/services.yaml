@@ -1,0 +1,48 @@
+# パラメータ定義
+#parameters:
+  # stripe_payment.xxx: 1
+
+# コンテナ定義
+#services:
+
+# スロットリングの定義
+eccube:
+  rate_limiter:
+    stripe_payment_mypage_card_info:
+      route: stripe_payment_mypage_card_info
+      method: ['POST']
+      type: ['ip', 'customer']
+      limit: 5
+      interval: '60 minutes'
+
+services:
+  # default configuration for services in *this* file
+  _defaults:
+    # automatically injects dependencies in your services
+    autowire: true
+    # automatically registers your services as commands, event subscribers, etc.
+    autoconfigure: true
+    # this means you cannot fetch services directly from the container via $container->get()
+    # if you need to do this, you can override this setting on individual services
+    public: false
+
+    bind:
+      $shoppingPurchaseFlow: '@eccube.purchase.flow.shopping'
+
+  Plugin\StripePayment43\EventListener\ShoppingListener:
+    arguments:
+      $em: '@doctrine.orm.entity_manager'
+      $configRepository: '@Plugin\StripePayment43\Repository\ConfigRepository'
+      $stripeService: '@Plugin\StripePayment43\Service\StripeService'
+    tags:
+      - { name: 'kernel.event_subscriber' }
+
+  Plugin\StripePayment43\Form\Extension\OrderTypeExtension:
+    tags:
+      - { name: form.type_extension }
+
+  Plugin\StripePayment43\Service\Method\StripePayment:
+    autowire: true
+    public: true
+
+  Symfony\Component\DependencyInjection\ContainerInterface: '@service_container'

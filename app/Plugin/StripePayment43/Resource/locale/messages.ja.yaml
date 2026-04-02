@@ -1,0 +1,42 @@
+# flash messages
+stripe_payment.admin.save.success: 登録しました。
+stripe_payment.admin.save.failed: 登録に失敗しました。
+stripe_payment.admin.save.create_webhook.failed: 制限付きキーに誤りがあるため、「Stripeからの決済完了の通知」を登録できませんでした。
+stripe_payment.admin.order.cancel.success: 取消処理を行いました。
+stripe_payment.admin.order.change_price.success: 取消処理を行いました。
+stripe_payment.admin.payment_status.bulk_action.success: '%count%件を処理しました。'
+
+# twig
+stripe_payment.admin.config.title: Stripe決済プラグイン
+stripe_payment.admin.config.sub_title: プラグイン一覧
+stripe_payment.admin.config.header: 設定
+stripe_payment.admin.config.save: 登録
+stripe_payment.admin.config.required: 必須
+stripe_payment.admin.config.back: プラグイン一覧
+stripe_payment.admin.config.apps: EC-CUBEアプリ（Stripe App Marketplace）
+stripe_payment.admin.config.public_key: 公開可能キー
+stripe_payment.admin.config.restricted_private_key: 制限付きキー
+stripe_payment.admin.config.environments: 環境切り替え
+stripe_payment.admin.config.separate_capture: 決済の承認と請求を別々に行う
+stripe_payment.admin.config.receive_notification: Stripeからの決済完了の通知を受け取る
+
+stripe_payment.admin.order_edit.title: 決済情報
+stripe_payment.admin.order_edit.cvs_title: コンビニ決済情報
+stripe_payment.admin.order_edit.payment_status: 決済種別
+stripe_payment.admin.order_edit.cvs_payment_status: コンビニ決済状況
+stripe_payment.admin.order_edit.cvs_type: コンビニ種別
+stripe_payment.admin.order_edit.payment_action: 決済操作
+stripe_payment.admin.order_edit.payment_action_cancel: 取消実行
+stripe_payment.admin.order_edit.payment_action_change_price: 金額変更
+stripe_payment.admin.order_edit.payment_id: Stripe取引ID
+
+stripe_payment.admin.customer_edit.customer_id: Stripe会員ID
+
+stripe_payment.admin.payment_status.search_condition_payment_status: 決済状況
+stripe_payment.admin.payment_status.col_order_staus: 対応状況
+stripe_payment.admin.payment_status.col_payment_status: 決済状況
+stripe_payment.admin.payment_status.updage_payment_status: 決済状況の変更
+stripe_payment.admin.payment_status.bulk_submit: 実行
+stripe_payment.shopping.checkout.error: カード決済に失敗しました。
+stripe_payment.shopping.verify.error: カードを利用することができません。
+

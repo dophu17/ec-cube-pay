@@ -1,0 +1,54 @@
+{% if stripe_payment_id is not null and stripe_payment_id != '' %}
+{% block javascript %}
+<script>
+    $(function () {
+        // 「注文番号」の情報が含まれる要素を探してその後にStripe注文番号URLを挿入
+        $('#stripe_order_info')
+            .insertAfter('.card-body .row.mb-3:has(div:contains("{{ 'admin.order.order_no'|trans|e('js') }}"))');
+
+        // 「対応状況」の情報が含まれる要素を探してその後にStripe決済状況を挿入
+        $('#stripe_payment_status')
+            .insertAfter('.card-body .row.mb-3:has(label:contains("{{ 'admin.order.order_status'|trans|e('js') }}"))');
+
+        // [Stripe決済]という文字列を保持するtd要素がある場合、id="stripe_payment_method_name--{dataId}"のtd要素内の文字列を[Stripe決済]という文字列の後に追加する
+        const stripePaymentOption = $(this).find('option:contains("Stripe決済")').first();
+        const paymentMethodDiv = $(`div[id="stripe_payment_method_name"]`);
+        if (stripePaymentOption.length > 0 && paymentMethodDiv.length > 0) {
+            stripePaymentOption.html(`${stripePaymentOption.text().trim()}<br />${paymentMethodDiv.text().trim()}`);
+        }
+    });
+</script>
+{% endblock %}
+{% endif %}
+
+<!-- Stripeの注文番号情報 -->
+{% if stripe_payment_id is not null and stripe_payment_id != '' %}
+<div id="stripe_order_info" class="row mb-3">
+    <label class="col-3 col-form-label">{{ 'stripe_payment.admin.order_edit.payment_id'|trans }}</label>
+    <div class="col">
+        <a href="https://dashboard.stripe.com/{{ environments == 1 ? 'test/' : '' }}payments/{{ stripe_payment_id }}" target="_blank">
+            {{ stripe_payment_id }}
+        </a>
+    </div>
+</div>
+
+
+<!-- Stripe決済状況 -->
+<div id="stripe_payment_status"  class="row mb-3">
+    <label class="col-3 col-form-label">{{ 'stripe_payment.admin.payment_status.col_payment_status'|trans }}</label>
+    <div class="col">
+    {# {{ dump(form) }} #}
+
+        {{ form_widget(form.StripePaymentPaymentStatus) }}
+        {{ form_errors(form.StripePaymentPaymentStatus) }}
+    </div>
+</div>
+<div id="stripe_payment_method_name">
+    ({{ Order.stripe_payment_method_name }}
+    {% if Order.stripe_payment_card_no_last4 is not empty %}
+        {{ Order.stripe_payment_card_no_last4 }})
+    {% else %}
+        )
+    {% endif %}
+</div>
+{% endif %}

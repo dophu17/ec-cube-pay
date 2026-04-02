@@ -1,0 +1,26 @@
+{% if stripe_customer_id is not null and stripe_customer_id != '' %}
+{% block javascript %}
+<script>
+    $(function () {
+        // 「会員ID」の情報が含まれる要素を探してその後にStripe顧客情報を移動
+        $('.card-body .row.mb-2').filter(function () {
+            return $(this).find('span').text().trim() === "{{ 'admin.customer.customer_id'|trans|e('js') }}";
+        }).after($('#stripe_customer_info'));
+    });
+</script>
+{% endblock %}
+{% endif %}
+
+<!-- Stripeの顧客情報 -->
+{% if stripe_customer_id is not null and stripe_customer_id != '' %}
+<div id="stripe_customer_info" class="row mb-2">
+    <div class="col-3">
+        <span>{{ 'stripe_payment.admin.customer_edit.customer_id'|trans }}</span>
+    </div>
+    <div class="col">
+        <a href="https://dashboard.stripe.com/{{ environments == 1 ? 'test/' : '' }}customers/{{ stripe_customer_id }}" target="_blank">
+            {{ stripe_customer_id }}
+        </a>
+    </div>
+</div>
+{% endif %}

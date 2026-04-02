@@ -1,0 +1,150 @@
+<script src="https://js.stripe.com/v3/"></script>
+{% if Order.Payment is not null and Order.Payment.getMethodClass == 'Plugin\\StripePayment43\\Service\\Method\\StripePayment' %}
+<script>
+    $(function () {
+        $(".ec-orderPayment > .ec-radio").last().after($("#stripe-payment-block").detach());
+    });
+    const handleError = (error) => {
+        const messageContainer = document.querySelector('#payment-errors');
+        messageContainer.classList.remove("invisible");
+        messageContainer.textContent = error.message;
+        // オーバーレイの削除
+        loadingOverlay("hide");
+        alert('エラーが発生しました');
+    }
+
+    // Stripeインスタンス
+    let stripe;
+    // Elementsインスタンス
+    let elements;
+
+    // stripeのpkを取得
+    async function fetchStripePublicKey() {
+        try {
+            const {error, public_key} = await fetch('{{ path("get_stripe_public_key") }}').then(r => r.json());
+
+            if (error) {
+                console.error('Error fetching Stripe public key:', error.message);
+                return false;
+            } else {
+                console.log('Get a Stripe public key');
+                return public_key;
+            }
+        } catch (e) {
+            console.error('Unexpected error:', e);
+        }
+    }
+
+    /** 画面表示 */
+    fetchStripePublicKey()
+    .then(pk => {
+            if (pk) {
+                {% if customerSessionErrorMsg is defined and customerSessionErrorMsg is not null %}
+                console.error('Please check your Stripe key configuration.');
+                console.error("{{ customerSessionErrorMsg }}");
+                $("#payment-element").after('<p class="stripe-message">Stripe決済は現在準備できておりません。</p>');
+                {% else %}
+
+                stripe = Stripe(pk);
+                    // 決済方法や表示について設定
+                    const options = {
+                            {% if customerSession is defined and customerSession is not null %}
+                                customerSessionClientSecret: "{{ customerSession }}", // Stripe顧客の決済情報を利用
+                            {% endif %}
+                            mode: 'payment',
+                            amount: {{ Order.payment_total }},
+                            currency: 'jpy',
+                        };
+                    elements = stripe.elements(options);
+                    const paymentElement = elements.create('payment', { layout: 'accordion'});
+
+                    // mount
+                    $(function () {
+                        paymentElement.mount('#payment-element');
+                    });
+                {% endif %}
+            } else {
+                console.error('Failed to initialize Stripe: Public key not available');
+                $("#payment-element").after('<p class="stripe-message">Stripe決済は現在準備できておりません。</p>');
+            }
+        })
+        .catch(error => {
+            console.error('Error initializing Stripe:', error.message);
+        });
+
+    /** 送信処理 */
+    const shoppingForm = document.querySelector('#shopping-form');
+    shoppingForm.addEventListener('submit', async (e) => {
+        // Avoid a full page POST request.
+        e.preventDefault();
+
+        // エラーメッセージをクリア
+        const messageContainer = document.querySelector('#payment-errors');
+        messageContainer.classList.add("invisible");
+        messageContainer.textContent = "";
+
+        // elementが正しく設定されない場合
+        if(elements == null) {
+            alert("stripeお支払い情報が正しく入力されておりません");
+            // オーバーレイの削除
+            loadingOverlay("hide");
+            return;
+        }
+
+        // validation
+        const {error: submitError} = await elements.submit();
+        if (submitError) {
+            handleError(submitError);
+            return;
+        }
+
+        /**
+         * Create Confirmation Token
+         * See https://docs.stripe.com/payments/payment-element/migration-ct#client-side
+         * See https://docs.stripe.com/api/confirmation_tokens/object?lang=php
+         */
+        //create confirmation token
+        const {error, confirmationToken} = await stripe.createConfirmationToken({
+                elements,
+                params: {
+                    payment_method_data: {
+                        billing_details: {
+                            name: "{{ Order.name01 }} {{ Order.name02 }}",
+                            email: "{{ Order.email }}",
+                        }
+                    }
+                }
+            });
+
+        // エラー処理
+        if (error) {
+            handleError(error);
+            return;
+        }
+
+        // formにstripe_payment_tokenセットする
+        $('#shopping_order_stripe_payment_token').val(confirmationToken.id);
+        $('#shopping_order_stripe_payment_method_name').val(confirmationToken.payment_method_preview?.type);
+        $('#shopping_order_stripe_payment_card_no_last4').val(confirmationToken.payment_method_preview?.card?.last4?
+        'xxxx-xxxx-xxxx-' + confirmationToken.payment_method_preview?.card?.last4 : '');
+
+        shoppingForm.submit();
+    });
+</script>
+
+<div id="stripe-payment-block">
+    <div class="ec-rectHeading">
+        <h2>お支払方法-詳細</h2>
+    </div>
+    <div id="payment-element">
+        <!-- Elements will create input elements here -->
+    </div>
+
+    <!-- We'll put the error messages in this element -->
+    <div id="payment-errors" class="alert alert-danger invisible" role="alert"></div>
+    {{ form_widget(form.stripe_payment_token) }}
+    {{ form_widget(form.stripe_payment_method_name) }}
+    {{ form_widget(form.stripe_payment_card_no_last4) }}
+
+</div>
+{% endif %}

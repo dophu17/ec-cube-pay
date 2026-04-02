@@ -1,0 +1,140 @@
+
+<script src="https://js.stripe.com/v3/"></script>
+
+<script>
+    $(function () {
+        $(".ec-radio").hide();
+        $(".ec-orderPayment > .ec-rectHeading").last().after($("#stripe").detach());
+        $(".ec-blockRadio:contains('Stripe決済')").last().after($("#payment_method").detach());
+    });
+
+    const handleError = (error) => {
+        alert(error.message);
+        // オーバーレイの削除
+        loadingOverlay("hide");
+    }
+
+    const handleServerResponse = async (payment_intent) => {
+        if (payment_intent.status === "requires_action") {
+            // 追加認証が必要な場合
+            const {error, public_key} = await fetch('{{ path("get_stripe_public_key") }}').then(r => r.json());
+
+            if (error) {
+                console.log(error.message);
+                console.log(error.details);
+                handleError(error);
+                return;
+            }
+
+            // zindexを落とす
+            $('.bg-load-overlay').css('z-index', 100);
+
+            const stripe = Stripe(public_key);
+            try {
+                const result = await stripe.handleNextAction({
+                    clientSecret: payment_intent.client_secret
+                });
+
+                // zindexを最大値へ
+                $('.bg-load-overlay').css('z-index', 2147483647);
+
+                if (result.error) {
+                    // 追加アクション失敗
+                    console.error('追加アクション失敗:', result.error.message);
+
+                    // 在庫を戻す
+                    await fetch('{{ path("payment_error") }}');
+
+                    // ユーザーにエラーメッセージを通知
+                    alert(result.error.message);
+
+                    // カード情報入力画面にリダイレクト
+                    window.location.href = '{{ path("shopping") }}';
+                } else {
+                    console.log('認証成功、フォーム送信します');
+
+                    // 成功処理
+                    await fetch('{{ path("payment_success") }}');
+
+                    // コンプリート画面へ遷移
+                    window.location.href = '{{ path("shopping_complete") }}';
+                }
+            } catch (error) {
+                // エラー処理
+                console.error('予期しないエラー:', error);
+                alert('予期しないエラーが発生いたしました。時間をおいて再度お試しください。');
+            }
+        } else {
+            // 追加認証が不要な場合はそのままフォーム送信
+            console.log('認証不要');
+            await fetch('{{ path("payment_success") }}');
+            window.location.href = '{{ path("shopping_complete") }}';
+        }
+    }
+
+    const shoppingForm = document.querySelector('#shopping-form');
+    shoppingForm.addEventListener('submit', async (e) => {
+        // Avoid a full page POST request.
+        e.preventDefault();
+
+        // submit処理
+        {% if Order.Payment is null or Order.Payment.getMethodClass != 'Plugin\\StripePayment43\\Service\\Method\\StripePayment' %}
+            shoppingForm.submit();
+            return;
+        {% endif %}
+
+        const formData = new FormData(shoppingForm);
+        await fetch('{{ path("submit_stripe_shopping") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        })
+            .then(response => {
+                // リダイレクトが発生したか確認
+                if (response.redirected) {
+                    console.log('リダイレクトされました:', response.url);
+
+                    // リダイレクト先に手動で遷移
+                    window.location.href = response.url;
+
+                    // リダイレクト後の処理は不要なので undefined を返す
+                    return Promise.resolve();
+                }
+
+                // レスポンスボディを JSON として解析
+                return response.json();
+            })
+            .then(data => {
+                if (!data) {
+                    return Promise.resolve();
+                }
+
+                if (data.payment_intent) {
+                    // 正常なレスポンスを処理
+                    console.log('正常なレスポンス:', data.payment_intent);
+
+                    handleServerResponse(data.payment_intent);
+                } else {
+                    // エラーレスポンスを処理
+                    console.error('エラーが発生しました:', data.error.message);
+                    console.error(data.error.details);
+
+                    handleError(data.error);
+                }
+            })
+            .catch(error => {
+                // ネットワークエラーや予期しないエラーを処理
+                console.error('予期しないエラー:', error);
+                alert('予期しないエラーが発生しました。時間をおいて再度お試しください。');
+            });
+    });
+</script>
+
+<div id="payment_method" style="padding-left: 1rem;">
+    支払詳細：{{ Order.stripe_payment_method_name }}
+    {% if Order.stripe_payment_card_no_last4 is not empty %}
+        ({{ Order.stripe_payment_card_no_last4 }})
+    {% endif %}
+</div>

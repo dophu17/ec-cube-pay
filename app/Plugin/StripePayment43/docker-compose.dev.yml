@@ -1,0 +1,19 @@
+version: "3"
+
+services:
+    ec-cube:
+        entrypoint: >
+            /bin/bash -c "
+            docker-php-entrypoint ls &&
+            composer config repositories.plugin '{\"type\": \"path\", \"url\": \"../plugin\"}' &&
+            bin/console eccube:composer:require ec-cube/stripepayment43 &&
+            bin/console eccube:plugin:enable --code=StripePayment43 &&
+            bin/console doctrine:query:sql \"INSERT INTO dtb_payment_option (delivery_id, payment_id, discriminator_type) SELECT 1, 5, 'paymentoption' WHERE NOT EXISTS (SELECT 1 FROM dtb_payment_option WHERE delivery_id = 1 AND payment_id = 5);\" &&
+            chown -R www-data:www-data /var/www/html/var &&
+            apache2-foreground
+            "
+        environment:
+            USER_ID: ${UID:-}
+            GROUP_ID: ${GID:-}
+        volumes:
+            - ".:/var/www/plugin:cached"

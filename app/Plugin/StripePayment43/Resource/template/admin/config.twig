@@ -1,0 +1,144 @@
+{% extends '@admin/default_frame.twig' %}
+
+{% set menus = ['store', 'plugin', 'plugin_list'] %}
+
+{% block title %}{{ 'stripe_payment.admin.config.title'|trans }}{% endblock %}
+{% block sub_title %}{{ 'stripe_payment.admin.config.sub_title'|trans }}{% endblock %}
+
+{% form_theme form '@admin/Form/bootstrap_4_horizontal_layout.html.twig' %}
+
+{% block stylesheet %}
+    <style>
+        .hidden {
+            display: none;
+        }
+    </style>
+{% endblock stylesheet %}
+
+{% block main %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const pkEditButton = document.getElementById("pk-edit-button");
+        pkEditButton.addEventListener("click", function () {
+            // 表示モードを非表示にし、編集モードを表示
+            const viewMode = document.getElementById("pk-view-mode");
+            const inputMode = document.getElementById("pk-input-mode");
+            viewMode.classList.add("hidden");
+            inputMode.classList.remove("hidden");
+        });
+        
+        const rkEditButton = document.getElementById("rk-edit-button");
+        rkEditButton.addEventListener("click", function () {
+            // 表示モードを非表示にし、編集モードを表示
+            const viewMode = document.getElementById("rk-view-mode");
+            const inputMode = document.getElementById("rk-input-mode");
+            viewMode.classList.add("hidden");
+            inputMode.classList.remove("hidden");
+        });
+    });
+</script>
+    <form role="form" method="post">
+
+        {{ form_widget(form._token) }}
+
+        <div class="c-contentsArea__cols">
+            <div class="c-contentsArea__primaryCol">
+                <div class="c-primaryCol">
+                    <div class="card rounded border-0 mb-4">
+                        <div class="card-header"><span>{{ 'stripe_payment.admin.config.header'|trans }}</span></div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-3"><span>{{ 'stripe_payment.admin.config.public_key'|trans }}</span><span
+                                            class="badge bg-primary ms-1">{{ 'stripe_payment.admin.config.required'|trans }}</span></div>
+                                <div class="col mb-2" id="pk-view-mode">
+                                    <button id="pk-edit-button" class="btn btn-link" type="button">入力欄を表示</button>
+                                    {{ form_errors(form.public_key) }}
+                                </div>
+                                <div class="col mb-2 hidden" id="pk-input-mode">
+                                    {{ form_widget(form.public_key) }}
+                                    {{ form_errors(form.public_key) }}
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-3"><span>{{ 'stripe_payment.admin.config.restricted_private_key'|trans }}</span><span
+                                            class="badge bg-primary ms-1">{{ 'stripe_payment.admin.config.required'|trans }}</span></div>
+                                <div class="col mb-2" id="rk-view-mode">
+                                    <button id="rk-edit-button" class="btn btn-link" type="button">入力欄を表示</button>
+                                    {{ form_errors(form.restricted_private_key) }}
+                                </div>
+                                <div class="col mb-2 hidden" id="rk-input-mode">
+                                    {{ form_widget(form.restricted_private_key) }}
+                                    {{ form_errors(form.restricted_private_key) }}
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-3">
+                                    <span>{{ 'stripe_payment.admin.config.environments'|trans }}</span>
+                                </div>
+                                <div class="col mb-2">
+                                    <div class="d-flex flex-wrap">
+                                        <div class="mr-3">
+                                            {{ form_widget(form.environments[0], { 'attr': { 'checked': 'checked' } }) }}
+                                            {{ form_label(form.environments[0]) }}
+                                        </div>
+                                        <div class="form-check mr-3">
+                                            {{ form_widget(form.environments[1]) }}
+                                            {{ form_label(form.environments[1]) }}
+                                        </div>
+                                    </div>
+                                    {{ form_errors(form.environments) }}
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-3"><span>{{ 'stripe_payment.admin.config.separate_capture'|trans }}</span></div>
+                                <div class="col mb-2">
+                                    {{ form_widget(form.separate_capture) }}
+                                    {{ form_errors(form.separate_capture) }}
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-3"><span>{{ 'stripe_payment.admin.config.receive_notification'|trans }}</span></div>
+                                <div class="col mb-2">
+                                    {{ form_widget(form.receive_notification) }}
+                                    {{ form_errors(form.receive_notification) }}
+                                </div>
+                            </div>
+                            <div class="row" style="margin-top: 1rem;">
+                                <div class="col-auto">
+                                    <a href="https://marketplace.stripe.com/apps/install/link/com.ec-cube-stripe-app" target="_blank" 
+                                    class="btn btn-primary btn-lg d-flex align-items-center justify-content-center px-4"
+                                    style="font-size: 1.2rem; border-radius: 8px;">
+                                        <i class="fa fa-external-link-alt mr-2" aria-hidden="true" style="margin-right: 0.5rem;"></i>
+                                        {{ 'stripe_payment.admin.config.apps'|trans }}
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="c-conversionArea">
+            <div class="c-conversionArea__container">
+                <div class="row justify-content-between align-items-center">
+                    <div class="col-6">
+                        <div class="c-conversionArea__leftBlockItem">
+                            <a class="c-baseLink" href="{{ url('admin_store_plugin') }}">
+                                <i class="fa fa-backward" aria-hidden="true"></i>
+                                <span>{{ 'stripe_payment.admin.config.back'|trans }}</span>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="row align-items-center justify-content-end">
+                            <div class="col-auto">
+                                <button class="btn btn-ec-conversion px-5"
+                                        type="submit">{{ 'stripe_payment.admin.config.save'|trans }}</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+{% endblock %}

@@ -1,0 +1,1 @@
+{"name":"ec-cube\/stripepayment43","version":"1.0.3","description":"Stripe\u6c7a\u6e08\u30d7\u30e9\u30b0\u30a4\u30f3","type":"eccube-plugin","extra":{"code":"StripePayment43","id":3175},"require":{"ec-cube\/plugin-installer":"^2.0","stripe\/stripe-php":"^15.9"},"config":{"allow-plugins":{"ec-cube\/plugin-installer":true}}}
