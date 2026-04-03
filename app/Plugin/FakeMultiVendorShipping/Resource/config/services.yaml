@@ -5,3 +5,8 @@ services:
     tags:
       - { name: eccube.item.holder.preprocessor, flow_type: shopping, priority: 750 }
       - { name: eccube.item.holder.preprocessor, flow_type: order, priority: 750 }
+
+  # Form extension
+  Plugin\FakeMultiVendorShipping\Form\Extension\Admin\ProductClassTypeExtension:
+    tags:
+      - { name: form.type_extension, extended_type: Eccube\Form\Type\Admin\ProductClassType }
