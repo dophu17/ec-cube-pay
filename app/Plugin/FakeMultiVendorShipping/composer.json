@@ -1,0 +1,13 @@
+{
+    "name": "ec-cube/fakemultivendorshipping",
+    "version": "1.0.0",
+    "description": "Fake Multi Vendor Shipping",
+    "type": "eccube-plugin",
+    "require": {
+        "ec-cube/plugin-installer": "~0.0.7",
+        "eccube/eccube" : ">=4.0.0 <4.3.0"
+    },
+    "extra": {
+        "code": "FakeMultiVendorShipping"
+    }
+}

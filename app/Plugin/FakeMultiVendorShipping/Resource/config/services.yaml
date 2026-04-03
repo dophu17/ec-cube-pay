@@ -1,0 +1,7 @@
+services:
+  Plugin\FakeMultiVendorShipping\Service\FakeShippingProcessor:
+    arguments:
+      - '@Psr\Log\LoggerInterface'
+    tags:
+      - { name: eccube.item.holder.preprocessor, flow_type: shopping, priority: 750 }
+      - { name: eccube.item.holder.preprocessor, flow_type: order, priority: 750 }
