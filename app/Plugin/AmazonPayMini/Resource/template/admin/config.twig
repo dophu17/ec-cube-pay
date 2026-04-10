@@ -1,0 +1,63 @@
+{% extends '@admin/default_frame.twig' %}
+
+{% set menus = ['plugin', 'plugin_list'] %}
+
+{% block title %}Amazon Pay Mini Config{% endblock %}
+{% block sub_title %}Plugin Configuration{% endblock %}
+
+{% block main %}
+    <form name="config_form" method="post" action="{{ url('amazon_pay_mini_admin_config') }}">
+        {{ form_widget(form._token) }}
+        <div class="row justify-content-center">
+            <div class="col-8">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Amazon Pay V2 API Settings</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label class="control-label">{{ form.merchant_id.vars.label }}</label>
+                            {{ form_widget(form.merchant_id) }}
+                            {{ form_errors(form.merchant_id) }}
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label">{{ form.store_id.vars.label }}</label>
+                            {{ form_widget(form.store_id) }}
+                            {{ form_errors(form.store_id) }}
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label">{{ form.client_id.vars.label }}</label>
+                            {{ form_widget(form.client_id) }}
+                            {{ form_errors(form.client_id) }}
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label">{{ form.public_key_id.vars.label }}</label>
+                            {{ form_widget(form.public_key_id) }}
+                            {{ form_errors(form.public_key_id) }}
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label">{{ form.private_key.vars.label }}</label>
+                            {{ form_widget(form.private_key) }}
+                            {{ form_errors(form.private_key) }}
+                            <small class="form-text text-muted">Paste your RSA Private Key here (including BEGIN/END lines).</small>
+                        </div>
+                        <div class="form-group">
+                            <div class="custom-control custom-checkbox">
+                                {{ form_widget(form.sandbox, { 'attr': { 'class': 'custom-control-input' } }) }}
+                                <label class="custom-control-label" for="{{ form.sandbox.vars.id }}">{{ form.sandbox.vars.label }}</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <div class="row justify-content-between">
+                            <div class="col-3"></div>
+                            <div class="col-3">
+                                <button class="btn btn-primary btn-block" type="submit">Save</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+{% endblock %}

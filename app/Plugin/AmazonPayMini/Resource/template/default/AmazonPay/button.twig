@@ -1,0 +1,56 @@
+{% set Config = repository('Plugin\\AmazonPayMini\\Entity\\Config').get() %}
+
+{% if Config and Config.merchant_id %}
+    {# Amazon Pay V2 SDK #}
+    <script src="https://static-fe.payments-amazon.com/checkout.js"></script>
+
+    <div id="amazonPayButton"></div>
+
+    <script type="text/javascript">
+        if (typeof amazon !== 'undefined') {
+            const amazonPayButton = amazon.Pay.renderButton('#amazonPayButton', {
+                merchantId: '{{ Config.merchant_id|escape('js') }}',
+                ledgerCurrency: 'JPY',
+                sandbox: {{ Config.sandbox ? 'true' : 'false' }},
+                checkoutLanguage: 'ja_JP',
+                productType: 'PayAndShip',
+                placement: 'Cart',
+                buttonColor: 'Gold',
+                createCheckoutSessionConfig: {
+                    payloadJSON: '{{ { merchantId: Config.merchant_id, storeId: Config.store_id }|json_encode|escape('js') }}',
+                    signature: '', // In a full version, we'd sign this here or fetch it from server
+                    publicKeyId: '{{ Config.public_key_id|escape('js') }}'
+                }
+            });
+            
+            // For the "mini" version, we simplify the session creation by calling our backend
+            amazonPayButton.onClick(() => {
+                fetch('{{ url('amazon_pay_mini_checkout') }}', {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.checkoutSessionId) {
+                        amazonPayButton.initCheckout({
+                            checkoutSessionId: data.checkoutSessionId
+                        });
+                    } else {
+                        console.error('Failed to get checkoutSessionId', data);
+                        alert('Failed to initialize Amazon Pay. Please try again.');
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            });
+        }
+    </script>
+
+    <style>
+        #amazonPayButton {
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+    </style>
+{% endif %}

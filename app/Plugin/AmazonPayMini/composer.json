@@ -1,0 +1,13 @@
+{
+    "name": "ec-cube/amazon-pay-mini",
+    "version": "1.0.0",
+    "description": "Amazon Pay V2 Mini Plugin for EC-CUBE 4.3",
+    "type": "ec-cube-plugin",
+    "require": {
+        "ec-cube/plugin-installer": "~2.0",
+        "amzn/amazon-pay-api-sdk-php": "^2.0"
+    },
+    "extra": {
+        "code": "AmazonPayMini"
+    }
+}

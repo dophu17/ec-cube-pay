@@ -1,0 +1,24 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: true
+
+    Plugin\AmazonPayMini\Repository\ConfigRepository:
+        tags: [ 'doctrine.repository_service' ]
+
+    Plugin\AmazonPayMini\Service\AmazonPayService:
+        arguments:
+            - '@Plugin\AmazonPayMini\Repository\ConfigRepository'
+            - '@Psr\Log\LoggerInterface'
+
+    Plugin\AmazonPayMini\Service\Method\AmazonPay:
+        tags:
+            - { name: 'eccube.payment.method' }
+
+
+    Plugin\AmazonPayMini\EventListener\CheckoutEventListener:
+        arguments:
+            - '@Plugin\AmazonPayMini\Repository\ConfigRepository'
+        tags:
+            - { name: 'kernel.event_subscriber' }
