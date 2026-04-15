@@ -10,7 +10,8 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      DATABASE_URL: "postgres://dbuser:secret@postgres/eccubedb"
+      # DATABASE_URL: "postgres://dbuser:secret@postgres/eccubedb"
+      DATABASE_URL: "postgres://dbuser:secret@postgres/multi-vendor-db"
       DATABASE_SERVER_VERSION: 14
       DATABASE_CHARSET: 'utf8'
 
@@ -19,6 +20,7 @@ services:
     environment:
       POSTGRES_USER: dbuser
       POSTGRES_PASSWORD: secret
+      POSTGRES_DB: multi-vendor-db  # <--- Bổ sung thêm dòng này
     ports:
       - 15432:5432
     volumes:

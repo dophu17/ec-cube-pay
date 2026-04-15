@@ -103,6 +103,12 @@ services:
         resource: '../../../app/Customize/*'
         exclude: '../../../app/Customize/{Entity,Resource,Tests}'
 
+    Customize\Service\PurchaseFlow\Processor\VendorOrderItemProcessor:
+        tags:
+            - { name: 'eccube.item.holder.preprocessor', flow_type: 'cart', priority: 10 }
+            - { name: 'eccube.item.holder.preprocessor', flow_type: 'shopping', priority: 10 }
+            - { name: 'eccube.item.holder.preprocessor', flow_type: 'order', priority: 10 }
+
     Customize\Controller\:
         resource: '../../../app/Customize/Controller'
         tags: ['controller.service_arguments']

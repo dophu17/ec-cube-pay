@@ -42,3 +42,6 @@ doctrine:
             incomplete_order_status_hidden:
                 class: Eccube\Doctrine\Filter\OrderStatusFilter
                 enabled: false
+            vendor_filter:
+                class: Customize\Doctrine\Filter\VendorFilter
+                enabled: false
