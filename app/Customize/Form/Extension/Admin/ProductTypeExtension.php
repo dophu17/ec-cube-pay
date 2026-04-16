@@ -28,7 +28,7 @@ class ProductTypeExtension extends AbstractTypeExtension
                     ->orderBy('m.sort_no', 'ASC');
             },
             'eccube_form_options' => [
-                'auto_render' => true,
+                'auto_render' => false,
             ],
         ]);
     }

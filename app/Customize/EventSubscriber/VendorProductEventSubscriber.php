@@ -14,8 +14,6 @@ class VendorProductEventSubscriber implements EventSubscriberInterface
     {
         $source = $event->getSource();
 
-        $search = '{# エンティティ拡張の自動出力 #}';
-
         $html = '
                                 <div class="row">
                                     <div class="col-3">
@@ -29,7 +27,19 @@ class VendorProductEventSubscriber implements EventSubscriberInterface
                                     </div>
                                 </div>';
 
-        $newSource = str_replace($search, $html . "\n" . $search, $source);
+        // Try replacing the standard entity extension comment
+        if (strpos($source, '{# エンティティ拡張の自動出力 #}') !== false) {
+            $newSource = str_replace('{# エンティティ拡張の自動出力 #}', $html . "\n" . '{# エンティティ拡張の自動出力 #}', $source);
+        } else {
+            // Fallback: Insert before product_class popup or at the end of a known section
+            $searchFallback = '{{ form_widget(form.class.tax_rate) }}'; // Near line 538 in product.twig
+            if (strpos($source, $searchFallback) !== false) {
+                 $newSource = str_replace($searchFallback, $searchFallback . "\n" . '</div></div></div>' . $html . '<div><div><div>', $source);
+            } else {
+                 $newSource = $source . $html;
+            }
+        }
+        
         $event->setSource($newSource);
     }
 
@@ -37,6 +47,9 @@ class VendorProductEventSubscriber implements EventSubscriberInterface
     {
         return [
             'admin/Product/product.twig' => 'onAdminProductEdit',
+            '@admin/Product/product.twig' => 'onAdminProductEdit',
+            'admin/product/product.twig' => 'onAdminProductEdit',
+            '@admin/product/product.twig' => 'onAdminProductEdit',
         ];
     }
 }

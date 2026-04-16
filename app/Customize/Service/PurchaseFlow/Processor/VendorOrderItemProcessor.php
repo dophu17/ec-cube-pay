@@ -12,9 +12,12 @@ class VendorOrderItemProcessor implements ItemHolderPreprocessor
     {
         foreach ($itemHolder->getItems() as $item) {
             if ($item->isProduct()) {
-                $Product = $item->getProduct();
-                if ($Product && $Product->getVendor()) {
-                    $item->setVendorId($Product->getVendor()->getId());
+                $ProductClass = $item->getProductClass();
+                if ($ProductClass) {
+                    $Product = $ProductClass->getProduct();
+                    if ($Product && $Product->getVendor()) {
+                        $item->setVendorId($Product->getVendor()->getId());
+                    }
                 }
             }
         }

@@ -18,7 +18,7 @@ class MemberTypeExtension extends AbstractTypeExtension
                 'label' => 'Vendor Flag',
                 'required' => false,
                 'eccube_form_options' => [
-                    'auto_render' => true,
+                    'auto_render' => false,
                 ],
             ])
             ->add('vendor_name', TextType::class, [
@@ -28,7 +28,7 @@ class MemberTypeExtension extends AbstractTypeExtension
                     new Length(['max' => 255]),
                 ],
                 'eccube_form_options' => [
-                    'auto_render' => true,
+                    'auto_render' => false,
                 ],
             ]);
     }
